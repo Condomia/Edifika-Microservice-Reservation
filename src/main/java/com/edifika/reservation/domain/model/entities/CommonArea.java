@@ -1,5 +1,6 @@
 package com.edifika.reservation.domain.model.entities;
 
+import com.edifika.reservation.domain.model.valueobjects.EBookingType;
 import com.edifika.reservation.domain.model.valueobjects.ECommonAreaStatus;
 import com.edifika.shared.domain.model.entity.AuditableModel;
 import jakarta.persistence.*;
@@ -24,14 +25,20 @@ public class CommonArea extends AuditableModel {
     private ECommonAreaStatus status;
 
     @NotNull
-    @Positive
     @Column(nullable = false)
     private Integer maxCapacity;
 
-    public CommonArea(String name, Integer maxCapacity) {
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EBookingType bookingType;
+
+
+    public CommonArea(String name, Integer maxCapacity, EBookingType bookingType) {
         this.name = name;
-        this.status = ECommonAreaStatus.AVAILABLE;
         this.maxCapacity = maxCapacity;
+        this.bookingType = bookingType;
+        this.status = ECommonAreaStatus.AVAILABLE;
     }
 
     public void putInMaintenance() {

@@ -47,10 +47,10 @@ public class ReservationController {
     }
 
     @GetMapping("/availability")
-    public ResponseEntity<Map<Integer, Boolean>> getCommonAreaAvailability(
+    public ResponseEntity<Map<Integer, Integer>> getCommonAreaAvailability(
             @RequestParam Long commonAreaId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        Map<Integer, Boolean> availability = reservationQueryService.getAvailability(commonAreaId, date);
+        Map<Integer, Integer> availability = reservationQueryService.getAvailability(commonAreaId, date);
         return ResponseEntity.ok(availability);
     }
 }
