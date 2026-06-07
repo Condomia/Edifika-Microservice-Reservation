@@ -2,6 +2,7 @@ package com.edifika.reservation.application.internal.queryservices;
 
 import com.edifika.reservation.domain.model.aggregates.Reservation;
 import com.edifika.reservation.domain.model.entities.CommonArea;
+import com.edifika.reservation.domain.model.valueobjects.EBookingType;
 import com.edifika.reservation.domain.model.valueobjects.ECommonAreaStatus;
 import com.edifika.reservation.domain.model.valueobjects.EReservationStatus;
 import com.edifika.reservation.infrastructure.persistence.jpa.repositories.CommonAreaRepository;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,9 +25,7 @@ public class ReservationQueryServiceImpl {
     private final ReservationRepository reservationRepository;
     private final CommonAreaRepository commonAreaRepository;
 
-    @Transactional(readOnly = true)
-    public Map<Integer, Boolean> getAvailability(Long commonAreaId, LocalDate date) {
-        // US16: Verify common area status
+    public Map<Integer, Integer> getAvailability(Long commonAreaId, LocalDate date) {
         CommonArea commonArea = commonAreaRepository.findById(commonAreaId)
                 .orElseThrow(() -> new IllegalArgumentException("Common Area not found with id: " + commonAreaId));
 
@@ -33,19 +33,21 @@ public class ReservationQueryServiceImpl {
             throw new IllegalStateException("Common Area is currently under maintenance.");
         }
 
-        // Get all active reservations for the given area and date
-        List<Integer> bookedSlots = reservationRepository
-                .findByCommonAreaIdAndReservationDateAndStatus(commonAreaId, date, EReservationStatus.ACTIVE)
-                .stream()
-                .map(Reservation::getTimeSlot)
-                .toList();
+        Map<Integer, Integer> availabilityMap = new LinkedHashMap<>();
+        int totalHours = 24;
 
-        // US16: Build availability list for all 24 hour-slots of the day
-        return IntStream.range(0, 24).boxed()
-                .collect(Collectors.toMap(
-                        hour -> hour,
-                        hour -> !bookedSlots.contains(hour) // true if available, false if booked
-                ));
+        for (int hour = 0; hour < totalHours; hour++) {
+            if (commonArea.getBookingType() == EBookingType.EXCLUSIVE) {
+                boolean isBooked = reservationRepository.findByCommonAreaIdAndReservationDateAndTimeSlotAndStatus(
+                        commonAreaId, date, hour, EReservationStatus.ACTIVE).isPresent();
+                availabilityMap.put(hour, isBooked ? 0 : 1);
+            } else if (commonArea.getBookingType() == EBookingType.SHARED) {
+                long activeReservations = reservationRepository.countByCommonAreaIdAndReservationDateAndTimeSlotAndStatus(
+                        commonAreaId, date, hour, EReservationStatus.ACTIVE);
+                int availableSlots = commonArea.getMaxCapacity() - (int) activeReservations;
+                availabilityMap.put(hour, Math.max(0, availableSlots)); // Ensure it doesn't go below zero
+            }
+        }
+        return availabilityMap;
     }
 }
-
