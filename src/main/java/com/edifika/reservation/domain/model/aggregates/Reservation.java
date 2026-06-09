@@ -35,6 +35,8 @@ public class Reservation extends AuditableAbstractAggregateRoot<Reservation> {
     @Column(nullable = false)
     private Integer timeSlot; // Represents the hour block (e.g., 9 for 9:00-10:00)
 
+    private Integer numberOfGuests;
+
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

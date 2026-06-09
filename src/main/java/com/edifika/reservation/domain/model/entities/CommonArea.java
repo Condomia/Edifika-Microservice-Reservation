@@ -1,5 +1,6 @@
 package com.edifika.reservation.domain.model.entities;
 
+import com.edifika.reservation.domain.model.valueobjects.CommonAreaType;
 import com.edifika.reservation.domain.model.valueobjects.EBookingType;
 import com.edifika.reservation.domain.model.valueobjects.ECommonAreaStatus;
 import com.edifika.shared.domain.model.entity.AuditableModel;
@@ -33,12 +34,25 @@ public class CommonArea extends AuditableModel {
     @Column(nullable = false)
     private EBookingType bookingType;
 
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CommonAreaType type;
 
-    public CommonArea(String name, Integer maxCapacity, EBookingType bookingType) {
+    @OneToOne(mappedBy = "commonArea", cascade = CascadeType.ALL, orphanRemoval = true)
+    private CommonAreaRule rule;
+
+
+    public CommonArea(String name, Integer maxCapacity, EBookingType bookingType, CommonAreaType type) {
         this.name = name;
         this.maxCapacity = maxCapacity;
         this.bookingType = bookingType;
+        this.type = type;
         this.status = ECommonAreaStatus.AVAILABLE;
+    }
+
+    public void setRule(CommonAreaRule rule) {
+        this.rule = rule;
     }
 
     public void putInMaintenance() {

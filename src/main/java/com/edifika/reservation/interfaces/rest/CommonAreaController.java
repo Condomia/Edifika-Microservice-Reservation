@@ -26,11 +26,7 @@ public class CommonAreaController {
 
     @PostMapping
     public ResponseEntity<CommonAreaResource> createCommonArea(@RequestBody @Validated CreateCommonAreaResource resource) {
-        CommonArea newCommonArea = commonAreaCommandService.handleCreateCommonArea(
-                resource.name(),
-                resource.maxCapacity(),
-                resource.bookingType()
-        );
+        CommonArea newCommonArea = commonAreaCommandService.handleCreateCommonArea(resource);
         CommonAreaResource commonAreaResource = CommonAreaResourceFromEntityAssembler.toResourceFromEntity(newCommonArea);
         return new ResponseEntity<>(commonAreaResource, HttpStatus.CREATED);
     }
