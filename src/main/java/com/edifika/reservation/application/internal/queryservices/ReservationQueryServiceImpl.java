@@ -5,6 +5,7 @@ import com.edifika.reservation.domain.model.entities.CommonArea;
 import com.edifika.reservation.domain.model.valueobjects.EBookingType;
 import com.edifika.reservation.domain.model.valueobjects.ECommonAreaStatus;
 import com.edifika.reservation.domain.model.valueobjects.EReservationStatus;
+import com.edifika.reservation.domain.services.ReservationQueryService;
 import com.edifika.reservation.infrastructure.persistence.jpa.repositories.CommonAreaRepository;
 import com.edifika.reservation.infrastructure.persistence.jpa.repositories.ReservationRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,16 +16,16 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
-public class ReservationQueryServiceImpl {
+public class ReservationQueryServiceImpl implements ReservationQueryService {
 
     private final ReservationRepository reservationRepository;
     private final CommonAreaRepository commonAreaRepository;
 
+    @Override
+    @Transactional(readOnly = true)
     public Map<Integer, Integer> getAvailability(Long commonAreaId, LocalDate date) {
         CommonArea commonArea = commonAreaRepository.findById(commonAreaId)
                 .orElseThrow(() -> new IllegalArgumentException("Common Area not found with id: " + commonAreaId));
@@ -45,9 +46,15 @@ public class ReservationQueryServiceImpl {
                 long activeReservations = reservationRepository.countByCommonAreaIdAndReservationDateAndTimeSlotAndStatus(
                         commonAreaId, date, hour, EReservationStatus.ACTIVE);
                 int availableSlots = commonArea.getMaxCapacity() - (int) activeReservations;
-                availabilityMap.put(hour, Math.max(0, availableSlots)); // Ensure it doesn't go below zero
+                availabilityMap.put(hour, Math.max(0, availableSlots));
             }
         }
         return availabilityMap;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Reservation> handleGetAllReservations() {
+        return reservationRepository.findAll();
     }
 }

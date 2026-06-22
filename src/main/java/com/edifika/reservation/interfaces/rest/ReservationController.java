@@ -15,7 +15,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/reservations")
@@ -52,5 +54,14 @@ public class ReservationController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         Map<Integer, Integer> availability = reservationQueryService.getAvailability(commonAreaId, date);
         return ResponseEntity.ok(availability);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ReservationResource>> getAllReservations() {
+        List<Reservation> reservations = reservationQueryService.handleGetAllReservations();
+        List<ReservationResource> resources = reservations.stream()
+                .map(ReservationResourceFromEntityAssembler::toResourceFromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(resources);
     }
 }
